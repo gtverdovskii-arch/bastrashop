@@ -1,0 +1,1560 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BASTRASHOP — Contemporary Streetwear Store</title>
+  <!-- Підключення Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Шрифт Inter та Manrope для сучасного преміального вигляду -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Manrope', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              black: '#0f0f11',
+              dark: '#18181b',
+              gray: '#f4f4f6',
+              accent: '#111111'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Плавні анімації та кастомний скролбар */
+    html { scroll-behavior: smooth; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f4f4f6; }
+    ::-webkit-scrollbar-thumb { background: #d4d4d8; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #a1a1aa; }
+    
+    .product-card-img {
+      transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .product-card:hover .product-card-img {
+      transform: scale(1.06);
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-in {
+      animation: fadeIn 0.35s ease forwards;
+    }
+  </style>
+</head>
+<body class="bg-[#fafafa] text-zinc-900 font-sans antialiased selection:bg-zinc-900 selection:text-white">
+
+  <!-- Спливаюче повідомлення (Toast) замість alert() -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-[100] flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- Верхній рекламний рядок -->
+  <div class="bg-brand-black text-white text-xs py-2 px-4 text-center tracking-wide font-medium">
+    <span data-i18n="topBanner">Безкоштовна доставка Новою Поштою при замовленні від 3 000 грн • Нова колекція вже в наявності</span>
+  </div>
+
+  <!-- Шапка сайту (Header) -->
+  <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-zinc-200/80">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-4">
+      
+      <!-- Логотип -->
+      <a href="#" onclick="filterCategory('all'); return false;" class="flex items-center gap-2.5 group">
+        <div class="w-9 h-9 rounded-xl bg-brand-black text-white flex items-center justify-center font-display font-extrabold text-lg tracking-tighter group-hover:scale-105 transition-transform">
+          B
+        </div>
+        <span class="font-display font-extrabold text-xl sm:text-2xl tracking-tight text-zinc-950">
+          BASTRASHOP
+        </span>
+      </a>
+
+      <!-- Навігація категорій (Desktop) -->
+      <nav id="desktop-nav" class="hidden md:flex items-center gap-1 bg-zinc-100 p-1 rounded-xl">
+        <button onclick="filterCategory('all')" data-cat="all" class="cat-btn active px-4 py-1.5 rounded-lg text-sm font-medium transition-all bg-white text-zinc-950 shadow-sm" data-i18n="catAll">Усі товари</button>
+        <button onclick="filterCategory('hoodies')" data-cat="hoodies" class="cat-btn px-4 py-1.5 rounded-lg text-sm font-medium text-zinc-600 hover:text-zinc-950 transition-all" data-i18n="catHoodies">Худі та світшоти</button>
+        <button onclick="filterCategory('tshirts')" data-cat="tshirts" class="cat-btn px-4 py-1.5 rounded-lg text-sm font-medium text-zinc-600 hover:text-zinc-950 transition-all" data-i18n="catTshirts">Футболки</button>
+        <button onclick="filterCategory('pants')" data-cat="pants" class="cat-btn px-4 py-1.5 rounded-lg text-sm font-medium text-zinc-600 hover:text-zinc-950 transition-all" data-i18n="catPants">Штани</button>
+        <button onclick="filterCategory('accessories')" data-cat="accessories" class="cat-btn px-4 py-1.5 rounded-lg text-sm font-medium text-zinc-600 hover:text-zinc-950 transition-all" data-i18n="catAccessories">Аксесуари</button>
+      </nav>
+
+      <!-- Права панель керування: Перемикач мови, Адмін/Таблиця, Кошик -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <!-- Перемикач UA / RU -->
+        <div class="flex items-center bg-zinc-100 p-1 rounded-xl border border-zinc-200/60" role="group" aria-label="Language switcher">
+          <button id="lang-ua" onclick="setLanguage('ua')" class="px-2.5 py-1 rounded-lg text-xs font-bold transition-all bg-zinc-900 text-white shadow-sm">
+            UA
+          </button>
+          <button id="lang-ru" onclick="setLanguage('ru')" class="px-2.5 py-1 rounded-lg text-xs font-bold transition-all text-zinc-600 hover:text-zinc-950">
+            RU
+          </button>
+        </div>
+
+        <!-- Кнопка підключення Google Таблиці / Налаштувань -->
+        <button onclick="openSettingsModal()" class="p-2.5 rounded-xl bg-zinc-100 hover:bg-zinc-200/80 text-zinc-800 transition-colors flex items-center gap-1.5 border border-zinc-200/60" title="Налаштування магазину та Google Таблиці">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+          </svg>
+          <span class="hidden lg:inline text-xs font-semibold" data-i18n="settingsBtn">Адмін / Таблиця</span>
+        </button>
+
+        <!-- Кнопка Кошика -->
+        <button onclick="openCart()" class="relative p-2.5 sm:px-4 sm:py-2.5 rounded-xl bg-brand-black hover:bg-zinc-800 text-white transition-all flex items-center gap-2 shadow-sm">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+          </svg>
+          <span class="hidden sm:inline text-sm font-semibold" data-i18n="cartBtn">Кошик</span>
+          <span id="cart-badge" class="min-w-[20px] h-5 px-1.5 rounded-full bg-white text-zinc-950 text-xs font-extrabold flex items-center justify-center">
+            0
+          </span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Мобільні категорії (горизонтальний скрол) -->
+    <div class="md:hidden border-t border-zinc-100 px-4 py-2.5 flex items-center gap-2 overflow-x-auto bg-white">
+      <button onclick="filterCategory('all')" data-cat="all" class="cat-btn active shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-zinc-900 text-white" data-i18n="catAll">Усі товари</button>
+      <button onclick="filterCategory('hoodies')" data-cat="hoodies" class="cat-btn shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-zinc-100 text-zinc-700" data-i18n="catHoodies">Худі та світшоти</button>
+      <button onclick="filterCategory('tshirts')" data-cat="tshirts" class="cat-btn shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-zinc-100 text-zinc-700" data-i18n="catTshirts">Футболки</button>
+      <button onclick="filterCategory('pants')" data-cat="pants" class="cat-btn shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-zinc-100 text-zinc-700" data-i18n="catPants">Штани</button>
+      <button onclick="filterCategory('accessories')" data-cat="accessories" class="cat-btn shrink-0 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-zinc-100 text-zinc-700" data-i18n="catAccessories">Аксесуари</button>
+    </div>
+  </header>
+
+  <!-- Головний банер (Hero Section) -->
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-10 pb-8">
+    <div class="relative rounded-3xl overflow-hidden bg-brand-black text-white min-h-[340px] sm:min-h-[420px] flex items-center shadow-xl">
+      <img 
+        src="https://images.unsplash.com/photo-1523398002811-999ca8dec234?auto=format&fit=crop&w=1600&q=80" 
+        onerror="this.src='https://placehold.co/1600x700/18181b/ffffff?text=BASTRASHOP+COLLECTION'"
+        alt="BASTRASHOP Streetwear" 
+        class="absolute inset-0 w-full h-full object-cover opacity-45"
+      />
+      <div class="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-transparent"></div>
+      
+      <div class="relative z-10 p-6 sm:p-12 lg:p-16 max-w-2xl">
+        <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md text-xs font-semibold uppercase tracking-wider mb-4 border border-white/15">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span data-i18n="heroTag">DROP 2026 • LIMITED EDITION</span>
+        </span>
+        <h1 class="font-display text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.1] mb-4" data-i18n="heroTitle">
+          Стиль великого міста у кожній деталі
+        </h1>
+        <p class="text-zinc-300 text-sm sm:text-base mb-8 leading-relaxed max-w-lg" data-i18n="heroSubtitle">
+          Оверсайз худі, щільний бавовняний трикотаж та бездоганний крій. Швидка відправка Новою Поштою по всій Україні.
+        </p>
+        <div class="flex flex-wrap items-center gap-3">
+          <a href="#catalog" class="px-6 py-3.5 rounded-2xl bg-white text-zinc-950 font-bold text-sm hover:bg-zinc-100 transition-all shadow-lg" data-i18n="heroCta">
+            Дивитись каталог
+          </a>
+          <button onclick="openSettingsModal()" class="px-5 py-3.5 rounded-2xl bg-white/10 hover:bg-white/20 backdrop-blur-md text-white font-semibold text-sm border border-white/15 transition-all" data-i18n="heroSheetBtn">
+            + Як додавати новинки
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Панель пошуку та статусу синхронізації -->
+  <section id="catalog" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-zinc-200/80 shadow-sm">
+      <div class="flex items-center gap-3">
+        <h2 class="font-display font-bold text-xl sm:text-2xl text-zinc-950" id="catalog-heading" data-i18n="catalogTitle">Каталог одягу</h2>
+        <span id="items-count" class="px-2.5 py-0.5 rounded-full bg-zinc-100 text-zinc-600 text-xs font-semibold">0</span>
+        <!-- Індикатор джерела товарів -->
+        <span id="source-indicator" class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-100 text-zinc-600 text-[11px] font-medium">
+          <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+          <span data-i18n="sourceEmpty">Очікує підключення таблиці</span>
+        </span>
+      </div>
+
+      <!-- Пошук по каталогу -->
+      <div class="relative w-full sm:w-72">
+        <svg class="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+        <input 
+          type="text" 
+          id="search-input" 
+          oninput="renderProducts()" 
+          placeholder="Пошук одягу..." 
+          data-i18n-placeholder="searchPlaceholder"
+          class="w-full pl-10 pr-4 py-2.5 rounded-xl bg-zinc-100/80 border border-transparent focus:border-zinc-300 focus:bg-white text-sm outline-none transition-all"
+        />
+      </div>
+    </div>
+  </section>
+
+  <!-- Сітка товарів -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-20">
+    <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+      <!-- Картки товарів генеруються через JS -->
+    </div>
+
+    <!-- Повідомлення, коли каталог ще порожній (до підключення Google Таблиці) -->
+    <div id="no-products-state" class="hidden text-center py-20 px-6 bg-white rounded-3xl border border-zinc-200/80 shadow-xs">
+      <div class="w-16 h-16 rounded-2xl bg-zinc-950 text-white flex items-center justify-center mx-auto mb-5 shadow-md">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+        </svg>
+      </div>
+      <span class="inline-block px-3 py-1 rounded-full bg-zinc-100 text-zinc-600 text-[11px] font-bold uppercase tracking-wider mb-3" data-i18n="emptyCatalogBadge">
+        BASTRASHOP • NEW DROP
+      </span>
+      <h3 class="font-display text-2xl sm:text-3xl font-extrabold text-zinc-950 mb-2" data-i18n="emptyCatalogTitle">
+        Нова колекція вже скоро
+      </h3>
+      <p class="text-sm text-zinc-500 max-w-md mx-auto mb-7 leading-relaxed" data-i18n="emptyCatalogDesc">
+        Товари ще не додані до вітрини. Власник магазину може завантажити асортимент за кілька секунд через Google Таблицю.
+      </p>
+      <button onclick="openSettingsModal()" class="inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-brand-black hover:bg-zinc-800 text-white text-sm font-bold transition-all shadow-lg">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
+        </svg>
+        <span data-i18n="emptyCatalogBtn">Підключити Google Таблицю</span>
+      </button>
+    </div>
+
+    <!-- Повідомлення, якщо нічого не знайдено за фільтром чи пошуком -->
+    <div id="empty-state" class="hidden text-center py-16 bg-white rounded-3xl border border-zinc-200/80">
+      <div class="w-14 h-14 rounded-2xl bg-zinc-100 text-zinc-500 flex items-center justify-center mx-auto mb-4">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+      </div>
+      <h3 class="text-lg font-bold text-zinc-900 mb-1" data-i18n="notFoundTitle">Товарів не знайдено</h3>
+      <p class="text-sm text-zinc-500 mb-4" data-i18n="notFoundDesc">Спробуйте змінити категорію або пошуковий запит</p>
+      <button onclick="resetFilters()" class="px-5 py-2.5 rounded-xl bg-zinc-900 text-white text-sm font-semibold hover:bg-zinc-800 transition-colors" data-i18n="resetFiltersBtn">
+        Скинути фільтри
+      </button>
+    </div>
+  </main>
+
+  <!-- Переваги магазину -->
+  <section class="border-t border-zinc-200 bg-white py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="p-6 rounded-2xl bg-zinc-50 border border-zinc-100 flex items-start gap-4">
+        <div class="w-11 h-11 rounded-xl bg-zinc-900 text-white flex items-center justify-center shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
+        </div>
+        <div>
+          <h4 class="font-bold text-zinc-900 text-sm mb-1" data-i18n="feat1Title">Доставка Новою Поштою</h4>
+          <p class="text-xs text-zinc-500 leading-relaxed" data-i18n="feat1Desc">Відправка в день замовлення у відділення або поштомат по всій Україні (1–2 дні).</p>
+        </div>
+      </div>
+
+      <div class="p-6 rounded-2xl bg-zinc-50 border border-zinc-100 flex items-start gap-4">
+        <div class="w-11 h-11 rounded-xl bg-zinc-900 text-white flex items-center justify-center shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+        </div>
+        <div>
+          <h4 class="font-bold text-zinc-900 text-sm mb-1" data-i18n="feat2Title">Зручна оплата на вибір</h4>
+          <p class="text-xs text-zinc-500 leading-relaxed" data-i18n="feat2Desc">Оплачуйте онлайн карткою (Monobank / Apple Pay) або при отриманні на пошті.</p>
+        </div>
+      </div>
+
+      <div class="p-6 rounded-2xl bg-zinc-50 border border-zinc-100 flex items-start gap-4">
+        <div class="w-11 h-11 rounded-xl bg-zinc-900 text-white flex items-center justify-center shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+        </div>
+        <div>
+          <h4 class="font-bold text-zinc-900 text-sm mb-1" data-i18n="feat3Title">Обмін та повернення 14 днів</h4>
+          <p class="text-xs text-zinc-500 leading-relaxed" data-i18n="feat3Desc">Якщо розмір не підійде — швидко обміняємо на інший без зайвих питань.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Футер -->
+  <footer class="bg-brand-black text-zinc-400 py-10 border-t border-zinc-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-lg bg-white text-zinc-950 flex items-center justify-center font-display font-extrabold text-base">B</div>
+        <span class="font-display font-bold text-white tracking-tight">BASTRASHOP</span>
+      </div>
+      <p class="text-xs text-center sm:text-left" data-i18n="footerCopy">© 2026 BASTRASHOP. Усі права захищено. Керування каталогом через Google Таблиці.</p>
+      <button onclick="openSettingsModal()" class="text-xs text-zinc-300 hover:text-white underline underline-offset-4" data-i18n="footerAdmin">
+        Панель власника (Google Sheets & Оплата)
+      </button>
+    </div>
+  </footer>
+
+  <!-- ===================================================================== -->
+  <!-- ВИЇЖДЖАЮЧА ПАНЕЛЬ КОШИКА ТА ОФОРМЛЕННЯ ЗАМОВЛЕННЯ (SLIDE-OVER CART)   -->
+  <!-- ===================================================================== -->
+  <div id="cart-drawer" class="fixed inset-0 z-50 hidden">
+    <!-- Затемнення фону -->
+    <div onclick="closeCart()" class="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"></div>
+    
+    <!-- Панель -->
+    <div class="fixed inset-y-0 right-0 max-w-full w-full sm:w-[480px] bg-white shadow-2xl flex flex-col z-10 animate-fade-in">
+      <!-- Заголовок кошика -->
+      <div class="px-6 py-4 border-b border-zinc-200 flex items-center justify-between bg-white">
+        <div class="flex items-center gap-2.5">
+          <h3 class="font-display font-bold text-lg text-zinc-950" data-i18n="cartTitle">Ваш кошик</h3>
+          <span id="drawer-cart-count" class="px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-700 text-xs font-bold">0</span>
+        </div>
+        <button onclick="closeCart()" class="p-2 rounded-xl text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 transition-colors">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+
+      <!-- Вміст кошика та форма замовлення (скролиться) -->
+      <div class="flex-1 overflow-y-auto p-6 space-y-6">
+        <!-- Порожній кошик -->
+        <div id="empty-cart-view" class="text-center py-12">
+          <div class="w-16 h-16 rounded-2xl bg-zinc-100 text-zinc-400 flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+          </div>
+          <p class="font-bold text-zinc-900 mb-1" data-i18n="cartEmptyTitle">Кошик порожній</p>
+          <p class="text-xs text-zinc-500 mb-6" data-i18n="cartEmptyDesc">Додайте стильні речі з каталогу, щоб оформити замовлення</p>
+          <button onclick="closeCart()" class="px-6 py-2.5 rounded-xl bg-zinc-900 text-white text-sm font-semibold hover:bg-zinc-800 transition-colors" data-i18n="continueShopping">
+            Перейти до покупок
+          </button>
+        </div>
+
+        <!-- Список доданих товарів -->
+        <div id="cart-items-list" class="space-y-3 hidden"></div>
+
+        <!-- Форма даних для доставки та вибору оплати -->
+        <form id="checkout-form" onsubmit="submitOrder(event)" class="hidden space-y-5 pt-4 border-t border-zinc-200">
+          <div>
+            <h4 class="font-display font-bold text-base text-zinc-950 mb-1" data-i18n="deliveryHeading">1. Дані для відправки (Нова Пошта)</h4>
+            <p class="text-xs text-zinc-500" data-i18n="deliverySub">Вкажіть отримувача посилки</p>
+          </div>
+
+          <div class="space-y-3">
+            <div>
+              <label class="block text-xs font-semibold text-zinc-700 mb-1" data-i18n="labelName">Прізвище та Ім'я *</label>
+              <input type="text" id="cust-name" required placeholder="Шевченко Тарас" data-i18n-placeholder="phName" class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 focus:border-zinc-900 text-sm outline-none transition-colors" />
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-semibold text-zinc-700 mb-1" data-i18n="labelPhone">Номер телефону *</label>
+                <input type="tel" id="cust-phone" required placeholder="+380 (99) 123-45-67" class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 focus:border-zinc-900 text-sm outline-none transition-colors" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-zinc-700 mb-1" data-i18n="labelTelegram">Telegram / Instagram</label>
+                <input type="text" id="cust-tg" placeholder="@username" class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 focus:border-zinc-900 text-sm outline-none transition-colors" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-semibold text-zinc-700 mb-1" data-i18n="labelCity">Місто / Населений пункт *</label>
+                <input type="text" id="cust-city" required placeholder="Київ" data-i18n-placeholder="phCity" class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 focus:border-zinc-900 text-sm outline-none transition-colors" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-zinc-700 mb-1" data-i18n="labelBranch">Відділення / Поштомат НП *</label>
+                <input type="text" id="cust-branch" required placeholder="Відділення №12" data-i18n-placeholder="phBranch" class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 focus:border-zinc-900 text-sm outline-none transition-colors" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Вибір способу оплати -->
+          <div class="pt-2">
+            <h4 class="font-display font-bold text-base text-zinc-950 mb-2.5" data-i18n="paymentHeading">2. Спосіб оплати</h4>
+            <div class="space-y-2.5">
+              <!-- Варіант 1: Оплата онлайн -->
+              <label class="flex items-start gap-3 p-3.5 rounded-2xl border-2 border-zinc-900 bg-zinc-50/80 cursor-pointer transition-all payment-option" id="opt-online-label">
+                <input type="radio" name="paymentMethod" value="online" checked onchange="highlightPaymentOption()" class="mt-1 accent-zinc-900 w-4 h-4" />
+                <div class="flex-1">
+                  <div class="flex items-center justify-between">
+                    <span class="font-bold text-sm text-zinc-950" data-i18n="payOnlineTitle">Оплата онлайн зараз</span>
+                    <span class="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 text-[10px] font-bold uppercase">Mono / Apple Pay</span>
+                  </div>
+                  <p class="text-xs text-zinc-500 mt-0.5" data-i18n="payOnlineDesc">Швидка оплата карткою без комісії за накладений платіж на пошті.</p>
+                </div>
+              </label>
+
+              <!-- Варіант 2: Оплата на пошті -->
+              <label class="flex items-start gap-3 p-3.5 rounded-2xl border border-zinc-200 hover:border-zinc-400 bg-white cursor-pointer transition-all payment-option" id="opt-cod-label">
+                <input type="radio" name="paymentMethod" value="cod" onchange="highlightPaymentOption()" class="mt-1 accent-zinc-900 w-4 h-4" />
+                <div class="flex-1">
+                  <div class="flex items-center justify-between">
+                    <span class="font-bold text-sm text-zinc-950" data-i18n="payCodTitle">Оплата на пошті при отриманні</span>
+                    <span class="px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-700 text-[10px] font-bold uppercase" data-i18n="payCodTag">Накладений</span>
+                  </div>
+                  <p class="text-xs text-zinc-500 mt-0.5" data-i18n="payCodDesc">Огляд та оплата замовлення у відділенні Нової Пошти (+ комісія НП 20 грн + 2%).</p>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- Підсумок та кнопка оформлення -->
+          <div class="bg-zinc-100 p-4 rounded-2xl space-y-2">
+            <div class="flex justify-between text-xs text-zinc-600">
+              <span data-i18n="summaryDelivery">Доставка (Нова Пошта):</span>
+              <span id="delivery-cost-text" class="font-semibold text-zinc-900" data-i18n="deliveryTariff">За тарифами перевізника</span>
+            </div>
+            <div class="flex justify-between items-center pt-2 border-t border-zinc-200/80">
+              <span class="font-bold text-sm text-zinc-950" data-i18n="summaryTotal">До сплати:</span>
+              <span id="cart-total-price" class="font-display font-extrabold text-xl text-zinc-950">0 грн</span>
+            </div>
+          </div>
+
+          <button type="submit" class="w-full py-4 rounded-2xl bg-brand-black hover:bg-zinc-800 text-white font-bold text-sm shadow-lg transition-all flex items-center justify-center gap-2">
+            <span data-i18n="submitOrderBtn">Підтвердити замовлення</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- МОДАЛЬНЕ ВІКНО ПІДТВЕРДЖЕННЯ ЗАМОВЛЕННЯ ТА ОНЛАЙН-ОПЛАТИ              -->
+  <!-- ===================================================================== -->
+  <div id="order-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+    <div onclick="closeOrderModal()" class="fixed inset-0 bg-black/65 backdrop-blur-xs"></div>
+    <div class="relative bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl z-10 animate-fade-in max-h-[92vh] overflow-y-auto">
+      
+      <div class="w-14 h-14 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-4">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+      </div>
+
+      <h3 class="font-display font-extrabold text-2xl text-center text-zinc-950 mb-1" data-i18n="orderSuccessTitle">Замовлення оформлено!</h3>
+      <p class="text-center text-xs text-zinc-500 mb-5">
+        <span data-i18n="orderNumLabel">Номер замовлення:</span> <strong id="receipt-order-id" class="text-zinc-900">#BS-1042</strong>
+      </p>
+
+      <!-- Блок онлайн-оплати (показується, якщо вибрано "Оплата онлайн") -->
+      <div id="online-payment-box" class="hidden mb-5 p-4 rounded-2xl bg-zinc-950 text-white space-y-3">
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-zinc-400" data-i18n="onlinePayPrompt">Сума до онлайн-оплати:</span>
+          <span id="online-pay-amount" class="font-display font-extrabold text-lg text-emerald-400">0 грн</span>
+        </div>
+        <p class="text-xs text-zinc-300 leading-relaxed" data-i18n="onlinePayHint">
+          Натисніть кнопку нижче, щоб оплатити замовлення карткою (Monobank / LiqPay / Apple Pay).
+        </p>
+        <button id="pay-now-btn" onclick="handleOnlinePaymentAction()" class="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-extrabold text-sm transition-all flex items-center justify-center gap-2 shadow-md">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+          <span data-i18n="payNowBtnText">Оплатити онлайн</span>
+        </button>
+        <div id="payment-completed-badge" class="hidden text-center py-2 px-3 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold">
+          ✓ <span data-i18n="paidSuccessBadge">Оплату підтверджено! Дякуємо!</span>
+        </div>
+      </div>
+
+      <!-- Деталі чеку -->
+      <div id="receipt-details" class="bg-zinc-50 rounded-2xl p-4 border border-zinc-200/80 text-xs space-y-2 text-zinc-700 mb-5">
+        <!-- Заповнюється динамічно -->
+      </div>
+
+      <div class="flex flex-col sm:flex-row gap-2.5">
+        <button onclick="copyReceiptText()" class="flex-1 py-3 px-4 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-900 font-semibold text-xs transition-colors flex items-center justify-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+          <span data-i18n="copyOrderBtn">Скопіювати деталі</span>
+        </button>
+        <button onclick="closeOrderModal()" class="flex-1 py-3 px-4 rounded-xl bg-brand-black hover:bg-zinc-800 text-white font-semibold text-xs transition-colors" data-i18n="doneBtn">
+          Повернутись у магазин
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- МОДАЛЬНЕ ВІКНО НАЛАШТУВАНЬ (GOOGLE ТАБЛИЦЯ + ОПЛАТА + TELEGRAM)       -->
+  <!-- ===================================================================== -->
+  <div id="settings-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+    <div onclick="closeSettingsModal()" class="fixed inset-0 bg-black/65 backdrop-blur-xs"></div>
+    <div class="relative bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl z-10 animate-fade-in max-h-[90vh] overflow-y-auto">
+      
+      <div class="flex items-center justify-between pb-4 border-b border-zinc-200 mb-6">
+        <div>
+          <h3 class="font-display font-extrabold text-xl text-zinc-950" data-i18n="adminTitle">Керування магазином BASTRASHOP</h3>
+          <p class="text-xs text-zinc-500" data-i18n="adminSubtitle">Підключіть Google Таблицю для додавання новинок та реквізити оплати</p>
+        </div>
+        <button onclick="closeSettingsModal()" class="p-2 rounded-xl text-zinc-500 hover:bg-zinc-100">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+
+      <div class="space-y-6">
+        <!-- Блок 1: Підключення Google Таблиці -->
+        <div class="p-4 sm:p-5 rounded-2xl bg-zinc-50 border border-zinc-200/90 space-y-3">
+          <div class="flex items-center justify-between">
+            <h4 class="font-bold text-sm text-zinc-950 flex items-center gap-2">
+              <span class="w-6 h-6 rounded-lg bg-emerald-600 text-white text-xs flex items-center justify-center font-bold">1</span>
+              <span data-i18n="sheetSectionTitle">Підключення Google Таблиці (Товари)</span>
+            </h4>
+            <button onclick="downloadSampleCsv()" class="text-xs font-semibold text-emerald-700 hover:underline" data-i18n="downloadCsvTemplate">
+              Завантажити шаблон (.csv)
+            </button>
+          </div>
+          
+          <p class="text-xs text-zinc-600 leading-relaxed" data-i18n="sheetInstructions">
+            Створіть Google Таблицю зі стовпцями: <code class="bg-white px-1.5 py-0.5 rounded border border-zinc-200 font-mono text-[11px]">id, title_ua, title_ru, category, price, image, sizes, badge_ua, badge_ru</code>. Натисніть <b>Файл → Поділитися → Опублікувати в інтернеті</b>, виберіть формат <b>CSV</b> і вставте посилання сюди:
+          </p>
+
+          <div class="flex flex-col sm:flex-row gap-2">
+            <input 
+              type="url" 
+              id="sheet-url-input" 
+              placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?output=csv" 
+              class="flex-1 px-3.5 py-2.5 rounded-xl bg-white border border-zinc-300 focus:border-zinc-900 text-xs outline-none"
+            />
+            <button onclick="saveAndSyncSheet()" class="px-4 py-2.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-bold shrink-0 transition-colors" data-i18n="syncBtn">
+              Завантажити товари
+            </button>
+          </div>
+
+          <div class="flex items-center justify-between pt-1">
+            <span id="sheet-status-msg" class="text-[11px] text-zinc-500" data-i18n="sheetStatusEmpty">Каталог зараз порожній. Вставте посилання CSV вище.</span>
+            <button onclick="clearConnectedSheet()" class="text-[11px] font-semibold text-zinc-600 hover:text-zinc-950 underline" data-i18n="clearCatalogBtn">
+              Очистити каталог
+            </button>
+          </div>
+        </div>
+
+        <!-- Блок 2: Посилання на онлайн-оплату -->
+        <div class="p-4 sm:p-5 rounded-2xl bg-zinc-50 border border-zinc-200/90 space-y-3">
+          <h4 class="font-bold text-sm text-zinc-950 flex items-center gap-2">
+            <span class="w-6 h-6 rounded-lg bg-zinc-900 text-white text-xs flex items-center justify-center font-bold">2</span>
+            <span data-i18n="payLinkSectionTitle">Посилання для онлайн-оплати (Monobank / LiqPay)</span>
+          </h4>
+          <p class="text-xs text-zinc-600 leading-relaxed" data-i18n="payLinkDesc">
+            Вставте посилання на вашу Банку Monobank, платіжну сторінку LiqPay або WayForPay. Якщо поле порожнє — працюватиме демонстраційна форма оплати карткою.
+          </p>
+          <input 
+            type="url" 
+            id="payment-url-input" 
+            placeholder="https://send.monobank.ua/jar/..." 
+            class="w-full px-3.5 py-2.5 rounded-xl bg-white border border-zinc-300 focus:border-zinc-900 text-xs outline-none"
+          />
+        </div>
+
+        <!-- Блок 3: Сповіщення про замовлення в Telegram -->
+        <div class="p-4 sm:p-5 rounded-2xl bg-zinc-50 border border-zinc-200/90 space-y-3">
+          <h4 class="font-bold text-sm text-zinc-950 flex items-center gap-2">
+            <span class="w-6 h-6 rounded-lg bg-sky-500 text-white text-xs flex items-center justify-center font-bold">3</span>
+            <span data-i18n="tgSectionTitle">Отримання замовлень у Telegram (необов'язково)</span>
+          </h4>
+          <p class="text-xs text-zinc-600 leading-relaxed" data-i18n="tgSectionDesc">
+            Щоб кожне замовлення клієнта (ПІБ, телефон, відділення НП, товари та спосіб оплати) миттєво приходило вам у Telegram, вкажіть токен бота від @BotFather та ваш Chat ID:
+          </p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <input type="text" id="tg-token-input" placeholder="Bot Token (123456:ABC-DEF...)" class="px-3.5 py-2.5 rounded-xl bg-white border border-zinc-300 focus:border-zinc-900 text-xs outline-none" />
+            <input type="text" id="tg-chatid-input" placeholder="Ваш Chat ID (напр. 384920192)" class="px-3.5 py-2.5 rounded-xl bg-white border border-zinc-300 focus:border-zinc-900 text-xs outline-none" />
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-3 pt-2">
+          <button onclick="saveAllSettings()" class="px-6 py-3 rounded-xl bg-brand-black hover:bg-zinc-800 text-white text-xs font-bold shadow-md transition-colors" data-i18n="saveSettingsBtn">
+            Зберегти налаштування
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- ДЕМО-ВІКНО ОНЛАЙН ОПЛАТИ КАРТКОЮ (ЯКЩО НЕ ВКАЗАНО ПОСИЛАННЯ MONOBANK) -->
+  <!-- ===================================================================== -->
+  <div id="demo-card-modal" class="fixed inset-0 z-[60] hidden flex items-center justify-center p-4">
+    <div onclick="closeDemoCardModal()" class="fixed inset-0 bg-black/70 backdrop-blur-xs"></div>
+    <div class="relative bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl z-10 animate-fade-in">
+      <div class="flex items-center justify-between mb-4">
+        <span class="font-display font-extrabold text-base text-zinc-950">BASTRASHOP PAY</span>
+        <span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold">SECURE 256-BIT</span>
+      </div>
+      <div class="p-4 rounded-2xl bg-zinc-900 text-white mb-4">
+        <div class="text-[11px] text-zinc-400 mb-1" data-i18n="demoPayTo">Оплата замовлення в BASTRASHOP</div>
+        <div id="demo-card-amount" class="font-display font-extrabold text-2xl">0 грн</div>
+      </div>
+      <form onsubmit="completeDemoCardPayment(event)" class="space-y-3">
+        <div>
+          <label class="block text-[11px] font-semibold text-zinc-600 mb-1" data-i18n="cardNumberLabel">Номер картки</label>
+          <input type="text" required maxlength="19" placeholder="5375 4141 •••• ••••" class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 text-sm font-mono outline-none focus:border-zinc-900" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] font-semibold text-zinc-600 mb-1" data-i18n="cardExpLabel">Термін дії</label>
+            <input type="text" required maxlength="5" placeholder="08/29" class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 text-sm font-mono outline-none focus:border-zinc-900" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-zinc-600 mb-1">CVV</label>
+            <input type="password" required maxlength="3" placeholder="•••" class="w-full px-3.5 py-2.5 rounded-xl border border-zinc-300 text-sm font-mono outline-none focus:border-zinc-900" />
+          </div>
+        </div>
+        <button type="submit" class="w-full py-3.5 mt-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-extrabold text-sm transition-colors" data-i18n="confirmCardPayBtn">
+          Підтвердити платіж
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- JAVASCRIPT: ДВОМОВНІСТЬ, GOOGLE SHEETS CSV, КОШИК ТА ОФОРМЛЕННЯ       -->
+  <!-- ===================================================================== -->
+  <script>
+    // 1. Словник перекладів (UA / RU)
+    const translations = {
+      ua: {
+        topBanner: "Безкоштовна доставка Новою Поштою при замовленні від 3 000 грн • Нова колекція вже в наявності",
+        catAll: "Усі товари",
+        catHoodies: "Худі та світшоти",
+        catTshirts: "Футболки",
+        catPants: "Штани",
+        catAccessories: "Аксесуари",
+        settingsBtn: "Адмін / Таблиця",
+        cartBtn: "Кошик",
+        heroTag: "DROP 2026 • LIMITED EDITION",
+        heroTitle: "Стиль великого міста у кожній деталі",
+        heroSubtitle: "Оверсайз худі, щільний бавовняний трикотаж та бездоганний крій. Швидка відправка Новою Поштою по всій Україні.",
+        heroCta: "Дивитись каталог",
+        heroSheetBtn: "+ Як додавати новинки",
+        catalogTitle: "Каталог одягу",
+        sourceEmpty: "Очікує підключення таблиці",
+        sourceSheet: "Google Таблиця",
+        emptyCatalogBadge: "BASTRASHOP • NEW DROP",
+        emptyCatalogTitle: "Нова колекція вже скоро",
+        emptyCatalogDesc: "Товари ще не додані до вітрини. Власник магазину може завантажити асортимент за кілька секунд через Google Таблицю.",
+        emptyCatalogBtn: "Підключити Google Таблицю",
+        searchPlaceholder: "Пошук одягу...",
+        notFoundTitle: "Товарів не знайдено",
+        notFoundDesc: "Спробуйте змінити категорію або пошуковий запит",
+        resetFiltersBtn: "Скинути фільтри",
+        addToCart: "Додати в кошик",
+        sizeLabel: "Розмір:",
+        currency: "грн",
+        feat1Title: "Доставка Новою Поштою",
+        feat1Desc: "Відправка в день замовлення у відділення або поштомат по всій Україні (1–2 дні).",
+        feat2Title: "Зручна оплата на вибір",
+        feat2Desc: "Оплачуйте онлайн карткою (Monobank / Apple Pay) або при отриманні на пошті.",
+        feat3Title: "Обмін та повернення 14 днів",
+        feat3Desc: "Якщо розмір не підійде — швидко обміняємо на інший без зайвих питань.",
+        footerCopy: "© 2026 BASTRASHOP. Усі права захищено. Керування каталогом через Google Таблиці.",
+        footerAdmin: "Панель власника (Google Sheets & Оплата)",
+        cartTitle: "Ваш кошик",
+        cartEmptyTitle: "Кошик порожній",
+        cartEmptyDesc: "Додайте стильні речі з каталогу, щоб оформити замовлення",
+        continueShopping: "Перейти до покупок",
+        deliveryHeading: "1. Дані для відправки (Нова Пошта)",
+        deliverySub: "Вкажіть отримувача посилки",
+        labelName: "Прізвище та Ім'я *",
+        phName: "Шевченко Тарас",
+        labelPhone: "Номер телефону *",
+        labelTelegram: "Telegram / Instagram",
+        labelCity: "Місто / Населений пункт *",
+        phCity: "Київ",
+        labelBranch: "Відділення / Поштомат НП *",
+        phBranch: "Відділення №12",
+        paymentHeading: "2. Спосіб оплати",
+        payOnlineTitle: "Оплата онлайн зараз",
+        payOnlineDesc: "Швидка оплата карткою без комісії за накладений платіж на пошті.",
+        payCodTitle: "Оплата на пошті при отриманні",
+        payCodTag: "Накладений",
+        payCodDesc: "Огляд та оплата замовлення у відділенні Нової Пошти (+ комісія НП 20 грн + 2%).",
+        summaryDelivery: "Доставка (Нова Пошта):",
+        deliveryTariff: "За тарифами перевізника",
+        deliveryFree: "Безкоштовно (від 3000 грн)",
+        summaryTotal: "До сплати:",
+        submitOrderBtn: "Підтвердити замовлення",
+        orderSuccessTitle: "Замовлення оформлено!",
+        orderNumLabel: "Номер замовлення:",
+        onlinePayPrompt: "Сума до онлайн-оплати:",
+        onlinePayHint: "Натисніть кнопку нижче, щоб оплатити замовлення карткою (Monobank / LiqPay / Apple Pay).",
+        payNowBtnText: "Оплатити онлайн",
+        paidSuccessBadge: "Оплату підтверджено! Дякуємо!",
+        copyOrderBtn: "Скопіювати деталі",
+        doneBtn: "Повернутись у магазин",
+        adminTitle: "Керування магазином BASTRASHOP",
+        adminSubtitle: "Підключіть Google Таблицю для додавання новинок та реквізити оплати",
+        sheetSectionTitle: "Підключення Google Таблиці (Товари)",
+        downloadCsvTemplate: "Завантажити шаблон (.csv)",
+        sheetInstructions: "Створіть Google Таблицю зі стовпцями: id, title_ua, title_ru, category, price, image, sizes, badge_ua, badge_ru. Натисніть Файл → Поділитися → Опублікувати в інтернеті, виберіть формат CSV і вставте посилання сюди:",
+        syncBtn: "Завантажити товари",
+        sheetStatusEmpty: "Каталог зараз порожній. Вставте посилання CSV вище.",
+        clearCatalogBtn: "Очистити каталог",
+        payLinkSectionTitle: "Посилання для онлайн-оплати (Monobank / LiqPay)",
+        payLinkDesc: "Вставте посилання на вашу Банку Monobank, платіжну сторінку LiqPay або WayForPay. Якщо поле порожнє — працюватиме демонстраційна форма оплати карткою.",
+        tgSectionTitle: "Отримання замовлень у Telegram (необов'язково)",
+        tgSectionDesc: "Щоб кожне замовлення клієнта (ПІБ, телефон, відділення НП, товари та спосіб оплати) миттєво приходило вам у Telegram, вкажіть токен бота від @BotFather та ваш Chat ID:",
+        saveSettingsBtn: "Зберегти налаштування",
+        demoPayTo: "Оплата замовлення в BASTRASHOP",
+        cardNumberLabel: "Номер картки",
+        cardExpLabel: "Термін дії",
+        confirmCardPayBtn: "Підтвердити платіж",
+        toastAdded: "Додано в кошик:",
+        toastCopied: "Деталі замовлення скопійовано!",
+        toastSettingsSaved: "Налаштування успішно збережено!",
+        toastSheetLoaded: "Товари з Google Таблиці завантажено!",
+        toastSheetError: "Помилка завантаження таблиці. Перевірте посилання CSV."
+      },
+      ru: {
+        topBanner: "Бесплатная доставка Новой Почтой при заказе от 3 000 грн • Новая коллекция уже в наличии",
+        catAll: "Все товары",
+        catHoodies: "Худи и свитшоты",
+        catTshirts: "Футболки",
+        catPants: "Штаны",
+        catAccessories: "Аксессуары",
+        settingsBtn: "Админ / Таблица",
+        cartBtn: "Корзина",
+        heroTag: "DROP 2026 • LIMITED EDITION",
+        heroTitle: "Стиль большого города в каждой детали",
+        heroSubtitle: "Оверсайз худи, плотный хлопковый трикотаж и безупречный крой. Быстрая отправка Новой Почтой по всей Украине.",
+        heroCta: "Смотреть каталог",
+        heroSheetBtn: "+ Как добавлять новинки",
+        catalogTitle: "Каталог одежды",
+        sourceEmpty: "Ожидает подключения таблицы",
+        sourceSheet: "Google Таблица",
+        emptyCatalogBadge: "BASTRASHOP • NEW DROP",
+        emptyCatalogTitle: "Новая коллекция уже скоро",
+        emptyCatalogDesc: "Товары еще не добавлены на витрину. Владелец магазина может загрузить ассортимент за несколько секунд через Google Таблицу.",
+        emptyCatalogBtn: "Подключить Google Таблицу",
+        searchPlaceholder: "Поиск одежды...",
+        notFoundTitle: "Товары не найдены",
+        notFoundDesc: "Попробуйте изменить категорию или поисковый запрос",
+        resetFiltersBtn: "Сбросить фильтры",
+        addToCart: "Добавить в корзину",
+        sizeLabel: "Размер:",
+        currency: "грн",
+        feat1Title: "Доставка Новой Почтой",
+        feat1Desc: "Отправка в день заказа в отделение или почтомат по всей Украине (1–2 дня).",
+        feat2Title: "Удобная оплата на выбор",
+        feat2Desc: "Оплачивайте онлайн картой (Monobank / Apple Pay) или при получении на почте.",
+        feat3Title: "Обмен и возврат 14 дней",
+        feat3Desc: "Если размер не подойдет — быстро обменяем на другой без лишних вопросов.",
+        footerCopy: "© 2026 BASTRASHOP. Все права защищены. Управление каталогом через Google Таблицы.",
+        footerAdmin: "Панель владельца (Google Sheets & Оплата)",
+        cartTitle: "Ваша корзина",
+        cartEmptyTitle: "Корзина пуста",
+        cartEmptyDesc: "Добавьте стильные вещи из каталога, чтобы оформить заказ",
+        continueShopping: "Перейти к покупкам",
+        deliveryHeading: "1. Данные для отправки (Новая Почта)",
+        deliverySub: "Укажите получателя посылки",
+        labelName: "Фамилия и Имя *",
+        phName: "Шевченко Тарас",
+        labelPhone: "Номер телефона *",
+        labelTelegram: "Telegram / Instagram",
+        labelCity: "Город / Населенный пункт *",
+        phCity: "Киев",
+        labelBranch: "Отделение / Почтомат НП *",
+        phBranch: "Отделение №12",
+        paymentHeading: "2. Способ оплаты",
+        payOnlineTitle: "Оплата онлайн сейчас",
+        payOnlineDesc: "Быстрая оплата картой без комиссии за наложенный платеж на почте.",
+        payCodTitle: "Оплата на почте при получении",
+        payCodTag: "Наложенный",
+        payCodDesc: "Осмотр и оплата заказа в отделении Новой Почты (+ комиссия НП 20 грн + 2%).",
+        summaryDelivery: "Доставка (Новая Почта):",
+        deliveryTariff: "По тарифам перевозчика",
+        deliveryFree: "Бесплатно (от 3000 грн)",
+        summaryTotal: "К оплате:",
+        submitOrderBtn: "Подтвердить заказ",
+        orderSuccessTitle: "Заказ оформлен!",
+        orderNumLabel: "Номер заказа:",
+        onlinePayPrompt: "Сумма к онлайн-оплате:",
+        onlinePayHint: "Нажмите кнопку ниже, чтобы оплатить заказ картой (Monobank / LiqPay / Apple Pay).",
+        payNowBtnText: "Оплатить онлайн",
+        paidSuccessBadge: "Оплата подтверждена! Спасибо!",
+        copyOrderBtn: "Скопировать детали",
+        doneBtn: "Вернуться в магазин",
+        adminTitle: "Управление магазином BASTRASHOP",
+        adminSubtitle: "Подключите Google Таблицу для добавления новинок и реквизиты оплаты",
+        sheetSectionTitle: "Подключение Google Таблицы (Товары)",
+        downloadCsvTemplate: "Скачать шаблон (.csv)",
+        sheetInstructions: "Создайте Google Таблицу со столбцами: id, title_ua, title_ru, category, price, image, sizes, badge_ua, badge_ru. Нажмите Файл → Поделиться → Опубликовать в интернете, выберите формат CSV и вставьте ссылку сюда:",
+        syncBtn: "Загрузить товары",
+        sheetStatusEmpty: "Каталог сейчас пуст. Вставьте ссылку CSV выше.",
+        clearCatalogBtn: "Очистить каталог",
+        payLinkSectionTitle: "Ссылка для онлайн-оплаты (Monobank / LiqPay)",
+        payLinkDesc: "Вставьте ссылку на вашу Банку Monobank, платежную страницу LiqPay или WayForPay. Если поле пустое — будет работать демонстрационная форма оплаты картой.",
+        tgSectionTitle: "Получение заказов в Telegram (необязательно)",
+        tgSectionDesc: "Чтобы каждый заказ клиента (ФИО, телефон, отделение НП, товары и способ оплаты) мгновенно приходил вам в Telegram, укажите токен бота от @BotFather и ваш Chat ID:",
+        saveSettingsBtn: "Сохранить настройки",
+        demoPayTo: "Оплата заказа в BASTRASHOP",
+        cardNumberLabel: "Номер карты",
+        cardExpLabel: "Срок действия",
+        confirmCardPayBtn: "Подтвердить платеж",
+        toastAdded: "Добавлено в корзину:",
+        toastCopied: "Детали заказа скопированы!",
+        toastSettingsSaved: "Настройки успешно сохранены!",
+        toastSheetLoaded: "Товары из Google Таблицы загружены!",
+        toastSheetError: "Ошибка загрузки таблицы. Проверьте ссылку CSV."
+      }
+    };
+
+    // 2. Стан додатку (початково каталог порожній — відображатимуться лише ваші товари з Google Таблиці)
+    let state = {
+      lang: localStorage.getItem('bs_lang') || 'ua',
+      category: 'all',
+      products: [],
+      selectedSizes: {}, // { productId: 'M' }
+      cart: JSON.parse(localStorage.getItem('bs_cart') || '[]'),
+      settings: {
+        sheetUrl: localStorage.getItem('bs_sheet_url') || '',
+        paymentUrl: localStorage.getItem('bs_payment_url') || '',
+        tgToken: localStorage.getItem('bs_tg_token') || '',
+        tgChatId: localStorage.getItem('bs_tg_chatid') || ''
+      },
+      lastOrder: null
+    };
+
+    // Ініціалізація при завантаженні сторінки
+    window.addEventListener('DOMContentLoaded', () => {
+      // Заповнюємо поля налаштувань збереженими даними
+      document.getElementById('sheet-url-input').value = state.settings.sheetUrl;
+      document.getElementById('payment-url-input').value = state.settings.paymentUrl;
+      document.getElementById('tg-token-input').value = state.settings.tgToken;
+      document.getElementById('tg-chatid-input').value = state.settings.tgChatId;
+
+      setLanguage(state.lang, false);
+      updateCartUI();
+
+      // Якщо власник вже підключив Google Таблицю — завантажуємо свіжі товари з неї
+      if (state.settings.sheetUrl) {
+        fetchProductsFromSheet(state.settings.sheetUrl, true);
+      } else {
+        updateSourceIndicator(false);
+        renderProducts();
+      }
+    });
+
+    // 3. Перемикання мови UA / RU
+        title_ua: "Зіп-худі Vintage Washed Charcoal",
+        title_ru: "Зип-худи Vintage Washed Charcoal",
+        category: "hoodies",
+        price: 2050,
+        image: "https://images.unsplash.com/photo-1578768079052-aa76e52ff62e?auto=format&fit=crop&w=900&q=80",
+        sizes: ["M", "L", "XL"],
+        badge_ua: "Limited",
+        badge_ru: "Limited"
+      },
+      {
+        id: "bs-05",
+        title_ua: "Футболка Street Graphic Print",
+        title_ru: "Футболка Street Graphic Print",
+        category: "tshirts",
+        price: 950,
+        image: "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&w=900&q=80",
+        sizes: ["S", "M", "L", "XL"],
+        badge_ua: "",
+        badge_ru: ""
+      },
+      {
+        id: "bs-06",
+        title_ua: "Кепка бавовняна Bastra Logo Cap",
+        title_ru: "Кепка хлопковая Bastra Logo Cap",
+        category: "accessories",
+        price: 650,
+        image: "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=900&q=80",
+        sizes: ["ONE SIZE"],
+        badge_ua: "Топ",
+        badge_ru: "Топ"
+      }
+    ];
+
+    // 3. Стан додатку
+    let state = {
+      lang: localStorage.getItem('bs_lang') || 'ua',
+      category: 'all',
+      products: [...DEMO_PRODUCTS],
+      selectedSizes: {}, // { productId: 'M' }
+      cart: JSON.parse(localStorage.getItem('bs_cart') || '[]'),
+      settings: {
+        sheetUrl: localStorage.getItem('bs_sheet_url') || '',
+        paymentUrl: localStorage.getItem('bs_payment_url') || '',
+        tgToken: localStorage.getItem('bs_tg_token') || '',
+        tgChatId: localStorage.getItem('bs_tg_chatid') || ''
+      },
+      lastOrder: null
+    };
+
+    // Ініціалізація при завантаженні сторінки
+    window.addEventListener('DOMContentLoaded', () => {
+      // Заповнюємо поля налаштувань збереженими даними
+      document.getElementById('sheet-url-input').value = state.settings.sheetUrl;
+      document.getElementById('payment-url-input').value = state.settings.paymentUrl;
+      document.getElementById('tg-token-input').value = state.settings.tgToken;
+      document.getElementById('tg-chatid-input').value = state.settings.tgChatId;
+
+      setLanguage(state.lang, false);
+      updateCartUI();
+
+      // Якщо власник вже підключив Google Таблицю — завантажуємо свіжі товари з неї
+      if (state.settings.sheetUrl) {
+        fetchProductsFromSheet(state.settings.sheetUrl, true);
+      } else {
+        renderProducts();
+      }
+    });
+
+    // 4. Перемикання мови UA / RU
+    function setLanguage(lang, rerender = true) {
+      state.lang = lang;
+      localStorage.setItem('bs_lang', lang);
+      document.documentElement.lang = lang === 'ua' ? 'uk' : 'ru';
+
+      // Стилізація кнопок UA / RU
+      const btnUa = document.getElementById('lang-ua');
+      const btnRu = document.getElementById('lang-ru');
+      if (lang === 'ua') {
+        btnUa.className = "px-2.5 py-1 rounded-lg text-xs font-bold transition-all bg-zinc-900 text-white shadow-sm";
+        btnRu.className = "px-2.5 py-1 rounded-lg text-xs font-bold transition-all text-zinc-600 hover:text-zinc-950";
+      } else {
+        btnRu.className = "px-2.5 py-1 rounded-lg text-xs font-bold transition-all bg-zinc-900 text-white shadow-sm";
+        btnUa.className = "px-2.5 py-1 rounded-lg text-xs font-bold transition-all text-zinc-600 hover:text-zinc-950";
+      }
+
+      // Оновлення всіх текстових елементів із data-i18n
+      const dict = translations[lang];
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (dict[key]) el.textContent = dict[key];
+      });
+
+      // Оновлення плейсхолдерів
+      document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        if (dict[key]) el.placeholder = dict[key];
+      });
+
+      if (rerender) {
+        renderProducts();
+        updateCartUI();
+      }
+    }
+
+    // 5. Фільтрація за категоріями
+    function filterCategory(cat) {
+      state.category = cat;
+      document.querySelectorAll('.cat-btn').forEach(btn => {
+        const isMatch = btn.getAttribute('data-cat') === cat;
+        if (btn.closest('#desktop-nav')) {
+          btn.className = isMatch
+            ? "cat-btn active px-4 py-1.5 rounded-lg text-sm font-medium transition-all bg-white text-zinc-950 shadow-sm"
+            : "cat-btn px-4 py-1.5 rounded-lg text-sm font-medium text-zinc-600 hover:text-zinc-950 transition-all";
+        } else {
+          btn.className = isMatch
+    // 5. Рендер карток товарів
+    function renderProducts() {
+      const grid = document.getElementById('products-grid');
+      const noProductsState = document.getElementById('no-products-state');
+      const emptyState = document.getElementById('empty-state');
+      const searchQuery = document.getElementById('search-input').value.trim().toLowerCase();
+      const dict = translations[state.lang];
+
+      // Якщо у магазині ще немає жодного товару (Google Таблиця ще не підключена)
+      if (state.products.length === 0) {
+        grid.innerHTML = '';
+        emptyState.classList.add('hidden');
+        noProductsState.classList.remove('hidden');
+        document.getElementById('items-count').textContent = '0';
+        return;
+      }
+
+      noProductsState.classList.add('hidden');
+
+      const filtered = state.products.filter(item => {
+        const matchesCat = state.category === 'all' || item.category === state.category;
+        const title = (state.lang === 'ua' ? item.title_ua : item.title_ru) || item.title_ua;
+        const matchesSearch = title.toLowerCase().includes(searchQuery);
+        return matchesCat && matchesSearch;
+      });
+
+      document.getElementById('items-count').textContent = filtered.length;
+
+      if (filtered.length === 0) {
+        grid.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+      grid.innerHTML = filtered.map(product => {
+        const title = (state.lang === 'ua' ? product.title_ua : product.title_ru) || product.title_ua;
+        const badge = state.lang === 'ua' ? product.badge_ua : product.badge_ru;
+        const sizes = Array.isArray(product.sizes) && product.sizes.length ? product.sizes : ['S', 'M', 'L'];
+        
+        // Вибраний розмір за замовчуванням (перший доступний)
+        if (!state.selectedSizes[product.id] || !sizes.includes(state.selectedSizes[product.id])) {
+          state.selectedSizes[product.id] = sizes[0];
+        }
+        const activeSize = state.selectedSizes[product.id];
+
+        const sizeButtonsHtml = sizes.map(sz => {
+          const isSelected = sz === activeSize;
+          return `
+            <button 
+              type="button"
+              onclick="selectProductSize('${product.id}', '${sz}')"
+              class="px-2.5 py-1 rounded-lg text-xs font-bold border transition-all ${
+                isSelected 
+                  ? 'bg-zinc-900 text-white border-zinc-900' 
+                  : 'bg-white text-zinc-700 border-zinc-200 hover:border-zinc-400'
+              }"
+            >
+              ${sz}
+            </button>
+          `;
+        }).join('');
+
+        return `
+          <article class="product-card bg-white rounded-3xl border border-zinc-200/80 overflow-hidden flex flex-col justify-between shadow-xs hover:shadow-xl transition-all duration-300">
+            <div>
+              <!-- Фото товару -->
+              <div class="relative aspect-[4/5] bg-zinc-100 overflow-hidden">
+                <img 
+                  src="${product.image}" 
+                  onerror="this.src='https://placehold.co/600x750/f4f4f6/18181b?text=BASTRASHOP'"
+                  alt="${title}" 
+                  loading="lazy"
+                  class="product-card-img w-full h-full object-cover"
+                />
+                ${badge ? `
+                  <span class="absolute top-3.5 left-3.5 px-3 py-1 rounded-full bg-zinc-950/90 backdrop-blur-md text-white text-[11px] font-bold tracking-wide">
+                    ${badge}
+                  </span>
+                ` : ''}
+              </div>
+
+              <!-- Опис та розміри -->
+              <div class="p-5 pb-3">
+                <h3 class="font-display font-bold text-base sm:text-lg text-zinc-950 leading-snug mb-2">
+                  ${title}
+                </h3>
+                <div class="font-display font-extrabold text-xl text-zinc-950 mb-4">
+                  ${Number(product.price).toLocaleString('uk-UA')} ${dict.currency}
+                </div>
+
+                <!-- Вибір розміру -->
+                <div class="flex items-center justify-between gap-2 pt-3 border-t border-zinc-100">
+                  <span class="text-xs font-medium text-zinc-500">${dict.sizeLabel}</span>
+                  <div class="flex flex-wrap gap-1.5">
+                    ${sizeButtonsHtml}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Кнопка Додати в кошик -->
+            <div class="p-5 pt-2">
+              <button 
+                type="button"
+                onclick="addToCart('${product.id}')"
+                class="w-full py-3.5 px-4 rounded-2xl bg-brand-black hover:bg-zinc-800 active:scale-[0.99] text-white font-bold text-sm transition-all flex items-center justify-center gap-2"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
+                </svg>
+                <span>${dict.addToCart}</span>
+              </button>
+            </div>
+          </article>
+        `;
+      }).join('');
+    }
+
+    function selectProductSize(productId, size) {
+      state.selectedSizes[productId] = size;
+      renderProducts();
+    }
+
+    // 7. Логіка Кошика
+    function addToCart(productId) {
+      const product = state.products.find(p => p.id === productId);
+      if (!product) return;
+
+      const size = state.selectedSizes[productId] || (product.sizes && product.sizes[0]) || 'M';
+      const existingIndex = state.cart.findIndex(item => item.id === productId && item.size === size);
+
+      if (existingIndex > -1) {
+        state.cart[existingIndex].qty += 1;
+      } else {
+        state.cart.push({
+          id: product.id,
+          title_ua: product.title_ua,
+          title_ru: product.title_ru,
+          price: Number(product.price),
+          image: product.image,
+          size: size,
+          qty: 1
+        });
+      }
+
+      saveCart();
+      updateCartUI();
+
+      const title = state.lang === 'ua' ? product.title_ua : product.title_ru;
+      showToast(`${translations[state.lang].toastAdded} ${title} (${size})`);
+    }
+
+    function changeCartQty(index, delta) {
+      if (!state.cart[index]) return;
+      state.cart[index].qty += delta;
+      if (state.cart[index].qty <= 0) {
+        state.cart.splice(index, 1);
+      }
+      saveCart();
+      updateCartUI();
+    }
+
+    function removeCartItem(index) {
+      state.cart.splice(index, 1);
+      saveCart();
+      updateCartUI();
+    }
+
+    function saveCart() {
+      localStorage.setItem('bs_cart', JSON.stringify(state.cart));
+    }
+
+    function getCartTotal() {
+      return state.cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+    }
+
+    function updateCartUI() {
+      const totalCount = state.cart.reduce((sum, item) => sum + item.qty, 0);
+      const totalPrice = getCartTotal();
+      const dict = translations[state.lang];
+
+      document.getElementById('cart-badge').textContent = totalCount;
+      document.getElementById('drawer-cart-count').textContent = totalCount;
+
+      const emptyView = document.getElementById('empty-cart-view');
+      const itemsList = document.getElementById('cart-items-list');
+      const checkoutForm = document.getElementById('checkout-form');
+
+      if (state.cart.length === 0) {
+        emptyView.classList.remove('hidden');
+        itemsList.classList.add('hidden');
+        checkoutForm.classList.add('hidden');
+        return;
+      }
+
+      emptyView.classList.add('hidden');
+      itemsList.classList.remove('hidden');
+      checkoutForm.classList.remove('hidden');
+
+      itemsList.innerHTML = state.cart.map((item, idx) => {
+        const title = (state.lang === 'ua' ? item.title_ua : item.title_ru) || item.title_ua;
+        return `
+          <div class="flex items-center gap-3.5 p-3 rounded-2xl bg-zinc-50 border border-zinc-200/80">
+            <img src="${item.image}" onerror="this.src='https://placehold.co/120x150/f4f4f6/18181b?text=BS'" alt="${title}" class="w-16 h-20 rounded-xl object-cover bg-white shrink-0" />
+            <div class="flex-1 min-w-0">
+              <div class="flex items-start justify-between gap-2">
+                <h5 class="font-bold text-xs sm:text-sm text-zinc-950 truncate">${title}</h5>
+                <button type="button" onclick="removeCartItem(${idx})" class="text-zinc-400 hover:text-red-500 p-1">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+              </div>
+              <div class="text-xs text-zinc-500 mt-0.5">${dict.sizeLabel} <strong class="text-zinc-800">${item.size}</strong></div>
+              <div class="flex items-center justify-between mt-2.5">
+                <div class="flex items-center gap-2 bg-white border border-zinc-200 rounded-lg px-1.5 py-0.5">
+                  <button type="button" onclick="changeCartQty(${idx}, -1)" class="w-5 h-5 flex items-center justify-center font-bold text-zinc-600 hover:text-zinc-950">−</button>
+                  <span class="text-xs font-bold w-4 text-center">${item.qty}</span>
+                  <button type="button" onclick="changeCartQty(${idx}, 1)" class="w-5 h-5 flex items-center justify-center font-bold text-zinc-600 hover:text-zinc-950">+</button>
+                </div>
+                <span class="font-display font-extrabold text-sm text-zinc-950">
+                  ${(item.price * item.qty).toLocaleString('uk-UA')} ${dict.currency}
+                </span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Безкоштовна доставка від 3000 грн
+      const deliveryEl = document.getElementById('delivery-cost-text');
+      if (totalPrice >= 3000) {
+        deliveryEl.textContent = dict.deliveryFree;
+        deliveryEl.className = "font-bold text-emerald-600";
+      } else {
+        deliveryEl.textContent = dict.deliveryTariff;
+        deliveryEl.className = "font-semibold text-zinc-900";
+      }
+
+      document.getElementById('cart-total-price').textContent = `${totalPrice.toLocaleString('uk-UA')} ${dict.currency}`;
+    }
+
+    function openCart() {
+      document.getElementById('cart-drawer').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeCart() {
+      document.getElementById('cart-drawer').classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+
+    function highlightPaymentOption() {
+      const selected = document.querySelector('input[name="paymentMethod"]:checked').value;
+      const onlineLabel = document.getElementById('opt-online-label');
+      const codLabel = document.getElementById('opt-cod-label');
+
+      if (selected === 'online') {
+        onlineLabel.className = "flex items-start gap-3 p-3.5 rounded-2xl border-2 border-zinc-900 bg-zinc-50/80 cursor-pointer transition-all payment-option";
+        codLabel.className = "flex items-start gap-3 p-3.5 rounded-2xl border border-zinc-200 hover:border-zinc-400 bg-white cursor-pointer transition-all payment-option";
+      } else {
+        codLabel.className = "flex items-start gap-3 p-3.5 rounded-2xl border-2 border-zinc-900 bg-zinc-50/80 cursor-pointer transition-all payment-option";
+        onlineLabel.className = "flex items-start gap-3 p-3.5 rounded-2xl border border-zinc-200 hover:border-zinc-400 bg-white cursor-pointer transition-all payment-option";
+      }
+    }
+
+    // 8. Оформлення замовлення (Нова Пошта + Оплата Онлайн або На Пошті)
+    async function submitOrder(event) {
+      event.preventDefault();
+      if (state.cart.length === 0) return;
+
+      const name = document.getElementById('cust-name').value.trim();
+      const phone = document.getElementById('cust-phone').value.trim();
+      const tg = document.getElementById('cust-tg').value.trim();
+      const city = document.getElementById('cust-city').value.trim();
+      const branch = document.getElementById('cust-branch').value.trim();
+      const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+      const total = getCartTotal();
+      const orderId = 'BS-' + Math.floor(1000 + Math.random() * 9000);
+
+      const orderObj = {
+        orderId,
+        name,
+        phone,
+        tg,
+        city,
+        branch,
+        paymentMethod,
+        total,
+        items: [...state.cart],
+        paid: false
+      };
+
+      state.lastOrder = orderObj;
+
+      // Відправка замовлення власнику в Telegram (якщо налаштовано)
+      if (state.settings.tgToken && state.settings.tgChatId) {
+        sendOrderToTelegram(orderObj);
+      }
+
+      // Очищаємо кошик та закриваємо шторку
+      state.cart = [];
+      saveCart();
+      updateCartUI();
+      closeCart();
+
+      // Відкриваємо модалку чеку
+      showOrderReceipt(orderObj);
+    }
+
+    function showOrderReceipt(order) {
+      const dict = translations[state.lang];
+      document.getElementById('receipt-order-id').textContent = `#${order.orderId}`;
+
+      const onlineBox = document.getElementById('online-payment-box');
+      const payNowBtn = document.getElementById('pay-now-btn');
+      const paidBadge = document.getElementById('payment-completed-badge');
+
+      if (order.paymentMethod === 'online') {
+        onlineBox.classList.remove('hidden');
+        document.getElementById('online-pay-amount').textContent = `${order.total.toLocaleString('uk-UA')} ${dict.currency}`;
+        if (order.paid) {
+          payNowBtn.classList.add('hidden');
+          paidBadge.classList.remove('hidden');
+        } else {
+          payNowBtn.classList.remove('hidden');
+          paidBadge.classList.add('hidden');
+        }
+      } else {
+        onlineBox.classList.add('hidden');
+      }
+
+      const itemsText = order.items.map(i => {
+        const title = state.lang === 'ua' ? i.title_ua : i.title_ru;
+        return `• ${title} [${i.size}] × ${i.qty} — ${(i.price * i.qty).toLocaleString('uk-UA')} ${dict.currency}`;
+      }).join('<br>');
+
+      const payMethodLabel = order.paymentMethod === 'online'
+        ? (order.paid ? (state.lang === 'ua' ? 'Оплата онлайн (ОПЛАЧЕНО)' : 'Оплата онлайн (ОПЛАЧЕНО)') : (state.lang === 'ua' ? 'Оплата онлайн (Очікує оплати)' : 'Оплата онлайн (Ожидает оплаты)'))
+        : (state.lang === 'ua' ? 'Оплата на пошті при отриманні' : 'Оплата на почте при получении');
+
+      document.getElementById('receipt-details').innerHTML = `
+        <div><strong class="text-zinc-950">${state.lang === 'ua' ? 'Отримувач:' : 'Получатель:'}</strong> ${order.name} (${order.phone})</div>
+        ${order.tg ? `<div><strong class="text-zinc-950">Соцмережа:</strong> ${order.tg}</div>` : ''}
+        <div><strong class="text-zinc-950">${state.lang === 'ua' ? 'Доставка НП:' : 'Доставка НП:'}</strong> м. ${order.city}, ${order.branch}</div>
+        <div><strong class="text-zinc-950">${state.lang === 'ua' ? 'Спосіб оплати:' : 'Способ оплаты:'}</strong> ${payMethodLabel}</div>
+        <div class="pt-2 border-t border-zinc-200">
+          <strong class="text-zinc-950 block mb-1">${state.lang === 'ua' ? 'Замовлені товари:' : 'Заказанные товары:'}</strong>
+          ${itemsText}
+        </div>
+        <div class="pt-2 border-t border-zinc-200 flex justify-between font-bold text-sm text-zinc-950">
+          <span>${dict.summaryTotal}</span>
+          <span>${order.total.toLocaleString('uk-UA')} ${dict.currency}</span>
+        </div>
+      `;
+
+      document.getElementById('order-modal').classList.remove('hidden');
+    }
+
+    function closeOrderModal() {
+      document.getElementById('order-modal').classList.add('hidden');
+    }
+
+    // Обробка натискання кнопки "Оплатити онлайн"
+    function handleOnlinePaymentAction() {
+      if (!state.lastOrder) return;
+
+      // Якщо власник вказав своє посилання (Monobank / LiqPay / WayForPay) — відкриваємо його
+      if (state.settings.paymentUrl && state.settings.paymentUrl.startsWith('http')) {
+        window.open(state.settings.paymentUrl, '_blank', 'noopener');
+        state.lastOrder.paid = true;
+        showOrderReceipt(state.lastOrder);
+      } else {
+        // Інакше показуємо красиву вбудовану форму оплати карткою
+        document.getElementById('demo-card-amount').textContent = `${state.lastOrder.total.toLocaleString('uk-UA')} грн`;
+        document.getElementById('demo-card-modal').classList.remove('hidden');
+      }
+    }
+
+    function closeDemoCardModal() {
+      document.getElementById('demo-card-modal').classList.add('hidden');
+    }
+
+    function completeDemoCardPayment(event) {
+      event.preventDefault();
+      closeDemoCardModal();
+      if (state.lastOrder) {
+        state.lastOrder.paid = true;
+        showOrderReceipt(state.lastOrder);
+        showToast(translations[state.lang].paidSuccessBadge);
+      }
+    }
+
+    function copyReceiptText() {
+      if (!state.lastOrder) return;
+      const o = state.lastOrder;
+      const itemsPlain = o.items.map(i => `- ${i.title_ua} (${i.size}) x${i.qty} = ${i.price * i.qty} грн`).join('\n');
+      const text = `Замовлення #${o.orderId} (BASTRASHOP)\nОтримувач: ${o.name}, ${o.phone}\nНова Пошта: ${o.city}, ${o.branch}\nОплата: ${o.paymentMethod === 'online' ? 'Онлайн' : 'На пошті'}\nТовари:\n${itemsPlain}\nРазом: ${o.total} грн`;
+
+      // Використовуємо document.execCommand('copy') для надійної роботи в будь-якому iframe
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+
+      showToast(translations[state.lang].toastCopied);
+    }
+
+    // Відправка замовлення в Telegram бота власника
+    async function sendOrderToTelegram(order) {
+      const itemsStr = order.items.map(i => `• ${i.title_ua} [${i.size}] × ${i.qty} — ${i.price * i.qty} грн`).join('\n');
+      const payStr = order.paymentMethod === 'online' ? '💳 Оплата онлайн' : '📦 Оплата на пошті (Накладений)';
+      const message = `🛍 <b>Нове замовлення #${order.orderId} — BASTRASHOP</b>\n\n` +
+        `👤 <b>Клієнт:</b> ${order.name}\n` +
+        `📞 <b>Телефон:</b> ${order.phone}\n` +
+        (order.tg ? `💬 <b>Контакт:</b> ${order.tg}\n` : '') +
+        `🚚 <b>Нова Пошта:</b> м. ${order.city}, ${order.branch}\n` +
+        `💰 <b>Оплата:</b> ${payStr}\n\n` +
+        `👕 <b>Товари:</b>\n${itemsStr}\n\n` +
+        `💵 <b>Сума: ${order.total} грн</b>`;
+
+      try {
+        await fetch(`https://api.telegram.org/bot${state.settings.tgToken}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: state.settings.tgChatId,
+            text: message,
+            parse_mode: 'HTML'
+          })
+        });
+      } catch (err) {
+        console.warn('Telegram notification error:', err);
+      }
+    }
+
+    // 9. Інтеграція з Google Таблицею (CSV Parser)
+    function openSettingsModal() {
+      document.getElementById('settings-modal').classList.remove('hidden');
+    }
+
+    function closeSettingsModal() {
+      document.getElementById('settings-modal').classList.add('hidden');
+    }
+
+    function saveAllSettings() {
+      const sheetUrl = document.getElementById('sheet-url-input').value.trim();
+      const paymentUrl = document.getElementById('payment-url-input').value.trim();
+      const tgToken = document.getElementById('tg-token-input').value.trim();
+      const tgChatId = document.getElementById('tg-chatid-input').value.trim();
+
+      state.settings = { sheetUrl, paymentUrl, tgToken, tgChatId };
+      localStorage.setItem('bs_sheet_url', sheetUrl);
+      localStorage.setItem('bs_payment_url', paymentUrl);
+      localStorage.setItem('bs_tg_token', tgToken);
+      localStorage.setItem('bs_tg_chatid', tgChatId);
+
+      if (sheetUrl) {
+        fetchProductsFromSheet(sheetUrl, false);
+      } else {
+        showToast(translations[state.lang].toastSettingsSaved);
+        closeSettingsModal();
+      }
+    }
+
+    function saveAndSyncSheet() {
+      const sheetUrl = document.getElementById('sheet-url-input').value.trim();
+      if (!sheetUrl) {
+        showToast(translations[state.lang].toastSheetError);
+        return;
+      }
+      state.settings.sheetUrl = sheetUrl;
+      localStorage.setItem('bs_sheet_url', sheetUrl);
+      fetchProductsFromSheet(sheetUrl, false);
+    }
+
+    async function fetchProductsFromSheet(url, silent = false) {
+      const statusMsg = document.getElementById('sheet-status-msg');
+      statusMsg.textContent = state.lang === 'ua' ? 'Завантаження з Google Таблиці...' : 'Загрузка из Google Таблицы...';
+
+      try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Network error');
+        const csvText = await response.text();
+        const parsed = parseCSVToProducts(csvText);
+
+        if (parsed.length === 0) throw new Error('Empty CSV');
+
+        state.products = parsed;
+        updateSourceIndicator(true);
+        renderProducts();
+
+        statusMsg.textContent = state.lang === 'ua'
+          ? `Успішно завантажено товарів: ${parsed.length}`
+          : `Успешно загружено товаров: ${parsed.length}`;
+
+        if (!silent) {
+          showToast(translations[state.lang].toastSheetLoaded);
+          closeSettingsModal();
+        }
+      } catch (error) {
+        console.error('Google Sheet Sync Error:', error);
+        statusMsg.textContent = translations[state.lang].toastSheetError;
+        if (!silent) showToast(translations[state.lang].toastSheetError);
+      }
+    }
+
+    // Надійний парсер CSV з Google Sheets (підтримує лапки та коми всередині тексту)
+    function parseCSVToProducts(csv) {
+      const lines = csv.split(/\r?\n/).filter(line => line.trim() !== '');
+      if (lines.length < 2) return [];
+
+      const headers = splitCsvLine(lines[0]).map(h => h.trim().toLowerCase());
+      const products = [];
+
+      for (let i = 1; i < lines.length; i++) {
+        const cols = splitCsvLine(lines[i]);
+        if (cols.length < 4) continue;
+
+        const row = {};
+        headers.forEach((h, idx) => {
+          row[h] = (cols[idx] || '').trim();
+        });
+
+        if (!row.title_ua && !row.title_ru) continue;
+
+        products.push({
+          id: row.id || `item-${i}`,
+          title_ua: row.title_ua || row.title_ru || 'Товар',
+          title_ru: row.title_ru || row.title_ua || 'Товар',
+          category: (row.category || 'hoodies').toLowerCase(),
+          price: Number(String(row.price || '0').replace(/[^\d.]/g, '')) || 1000,
+          image: row.image || 'https://placehold.co/600x750/f4f4f6/18181b?text=BASTRASHOP',
+          sizes: row.sizes ? row.sizes.split(/[,;/|]+/).map(s => s.trim()).filter(Boolean) : ['S', 'M', 'L', 'XL'],
+          badge_ua: row.badge_ua || '',
+          badge_ru: row.badge_ru || ''
+        });
+      }
+      return products;
+    }
+
+    function splitCsvLine(line) {
+      const result = [];
+      let current = '';
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+          result.push(current);
+          current = '';
+        } else {
+          current += char;
+        }
+      }
+      result.push(current);
+      return result;
+    }
+
+    function resetToDemoProducts() {
+      state.settings.sheetUrl = '';
+    function clearConnectedSheet() {
+      state.settings.sheetUrl = '';
+      localStorage.removeItem('bs_sheet_url');
+      document.getElementById('sheet-url-input').value = '';
+      state.products = [];
+      updateSourceIndicator(false);
+      renderProducts();
+      document.getElementById('sheet-status-msg').textContent = translations[state.lang].sheetStatusEmpty;
+      showToast(translations[state.lang].toastSettingsSaved);
+    }
+
+    function updateSourceIndicator(isSheet) {
+      const el = document.getElementById('source-indicator');
+      if (isSheet) {
+        el.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span><span>${translations[state.lang].sourceSheet}</span>`;
+      } else {
+        el.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span><span>${translations[state.lang].sourceEmpty}</span>`;
+      }
+    }
+
+    // Завантаження готового CSV-шаблону для Google Таблиці
+    function downloadSampleCsv() {
+      const csvContent = [
+        'id,title_ua,title_ru,category,price,image,sizes,badge_ua,badge_ru',
+        'bs-101,"Худі Oversize Black","Худи Oversize Black",hoodies,1850,https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=900&q=80,"S, M, L, XL",Новинка,Новинка',
+        'bs-102,"Футболка Basic White","Футболка Basic White",tshirts,890,https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=900&q=80,"S, M, L",Хіт,Хит'
+      ].join('\n');
+
+      const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'bastrashop_template.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // 10. Спливаюче сповіщення (Toast)
+    function showToast(message) {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = 'bg-zinc-950 text-white text-xs font-semibold px-4 py-3 rounded-2xl shadow-xl border border-zinc-800 animate-fade-in flex items-center gap-2';
+      toast.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span><span>${message}</span>`;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(6px)';
+        toast.style.transition = 'all 0.25s ease';
+        setTimeout(() => toast.remove(), 250);
+      }, 2800);
+    }
+  </script>
+</body>
+</html>
